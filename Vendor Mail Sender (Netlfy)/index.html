@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Vendor Mail Sender - Innovatiview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #0f172a; overflow-x: hidden; margin: 0; padding: 0; }
+    .bg-mesh { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; background: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 40%), radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.12) 0%, transparent 40%), radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%); filter: blur(40px); animation: floatMesh 18s ease-in-out infinite alternate; }
+    @keyframes floatMesh { 0% { transform: scale(1) translate(0px, 0px); } 50% { transform: scale(1.08) translate(-15px, 20px); } 100% { transform: scale(1) translate(15px, -10px); } }
+    .glass-card { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.25); }
+    .glass-card-dark { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .animate-fade-in { animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes fadeInScale { from { opacity: 0; transform: scale(0.97) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .pulse-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); animation: pulseGlow 1.8s infinite; }
+    @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+    .custom-input { transition: all 0.2s ease; }
+    .custom-input:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
+    .btn-animated { transition: all 0.2s ease; }
+    .btn-animated:hover { transform: translateY(-1px); box-shadow: 0 8px 20px -6px rgba(79, 70, 229, 0.4); }
+    .btn-animated:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+    .vendor-input { width: 100%; min-width: 90px; padding: 6px 8px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 11px; outline: none; }
+    .vendor-input:focus { border-color: #4f46e5; box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15); background: #fff; }
+    .vendor-input.invalid { border-color: #e11d48; background: #fff1f2; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; white-space: nowrap; }
+    .step-circle { width: 34px; height: 34px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; transition: all 0.3s ease; background: #e2e8f0; color: #64748b; }
+    .step-circle.active { background: #4f46e5; color: #fff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.2); }
+    .step-circle.done { background: #10b981; color: #fff; }
+    .step-label { font-size: 11px; font-weight: 700; color: #94a3b8; }
+    .step-label.active { color: #4f46e5; }
+    .step-label.done { color: #059669; }
+    .step-line { flex: 1; height: 3px; background: #e2e8f0; border-radius: 9999px; margin: 0 10px; transition: all 0.3s ease; }
+    .step-line.done { background: #10b981; }
+    .dropzone { border: 2px dashed #cbd5e1; border-radius: 14px; background: #f8fafc; padding: 16px; text-align: center; transition: all 0.2s ease; }
+    .dropzone.dragover { border-color: #4f46e5; background: #eef2ff; transform: scale(1.01); }
+    .dropzone .dz-icon { font-size: 26px; color: #94a3b8; margin-bottom: 6px; }
+    .dropzone.dragover .dz-icon { color: #4f46e5; }
+    .dropzone .dz-text { font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 10px; }
+    .dropzone .dz-name { font-size: 11px; font-weight: 700; color: #059669; margin-top: 8px; word-break: break-all; }
+    .dropzone input[type=file] { display: block; width: fit-content; max-width: 100%; margin: 0 auto; text-align: center; }
+    .app-logo { background: linear-gradient(135deg, #4f46e5, #10b981); color: #fff; display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-center relative">
+  <div class="bg-mesh"></div>
+
+  <!-- SESSION RESTORE SPLASH -->
+  <div id="bootSplash" class="hidden fixed inset-0 z-[70] bg-slate-900 flex items-center justify-center text-white text-sm font-semibold">
+    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Restoring your session...
+  </div>
+
+  <!-- LOGIN VIEW -->
+  <div id="loginView" class="w-screen h-screen flex flex-col md:flex-row relative z-10">
+    <div class="w-full md:w-1/2 bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 p-8 md:p-16 text-white flex flex-col justify-between relative overflow-hidden">
+      <div class="z-10 my-auto">
+        <div class="inline-flex items-center space-x-2 bg-indigo-500/20 border border-indigo-400/30 px-3.5 py-1.5 rounded-full text-xs font-semibold text-indigo-300 mb-6">
+          <span class="pulse-dot"></span><span>Enterprise Automation</span>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight mb-4">Vendor Mail Sender</h1>
+        <p class="text-indigo-300 font-medium text-sm md:text-base leading-relaxed mb-8">Smart | Seamless | Automated Operational Email Dispatch System</p>
+      </div>
+      <div class="z-10 pt-6 border-t border-white/10 text-xs">
+        <p class="text-slate-400">Developed By:</p>
+        <p class="font-bold text-slate-200">Process Excellence Team</p>
+        <p class="text-[10px] text-slate-500 mt-1">© 2026 Innovatiview India Ltd.</p>
+      </div>
+    </div>
+
+    <div class="w-full md:w-1/2 bg-white p-8 md:p-20 flex flex-col justify-center items-center">
+      <div class="w-full max-w-md">
+        <div class="mb-8">
+          <div class="flex items-center space-x-2">
+            <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">OpsCore Access</h2>
+            <span class="text-[10px] bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full uppercase">Innovatiview</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">Sign in with your official Innovatiview Google account (@innovatiview.in / @innovatiview.com).</p>
+        </div>
+
+        <div class="space-y-5">
+          <button onclick="handleGoogleSignIn()" id="googleBtn" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-700 font-bold border border-slate-300 rounded-xl px-4 py-3.5 shadow-sm text-xs btn-animated">
+            <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <span>Sign in with Google</span>
+          </button>
+        </div>
+        <div id="loginStatus" class="mt-4 text-xs text-center font-semibold min-h-[20px]"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD VIEW -->
+  <div id="dashboardView" class="hidden relative z-10 w-full max-w-7xl mx-auto p-4 md:p-6 my-6 space-y-6 animate-fade-in">
+    <header class="glass-card rounded-2xl p-4 md:p-5 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="app-logo w-10 h-10 rounded-xl shadow-md border border-slate-200"><i class="fa-solid fa-paper-plane"></i></div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <h1 class="text-lg font-extrabold text-slate-900 tracking-tight">Vendor Mail Sender</h1>
+            <span class="text-[10px] bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded-full">Innovatiview</span>
+          </div>
+          <p class="text-[11px] text-slate-500 font-medium">Process Excellence Automation Module</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-4 bg-slate-100/80 px-4 py-2 rounded-xl border border-slate-200/80">
+        <div class="flex items-center space-x-2">
+          <span class="pulse-dot"></span>
+          <span id="activeUser" class="text-xs font-semibold text-slate-700"></span>
+        </div>
+        <div class="h-4 w-px bg-slate-300"></div>
+        <button onclick="terminateSession()" class="text-xs font-bold text-rose-600 hover:text-rose-700 transition flex items-center space-x-1">
+          <i class="fa-solid fa-right-from-bracket"></i> <span>Terminate Session</span>
+        </button>
+      </div>
+    </header>
+
+    <div id="auditBanner" class="hidden rounded-xl bg-amber-100 border border-amber-300 text-amber-800 text-xs font-bold px-4 py-2.5"></div>
+
+    <!-- STEPPER -->
+    <div class="glass-card rounded-2xl px-5 py-4">
+      <div class="flex items-center">
+        <div class="flex items-center space-x-2.5">
+          <div id="stepCircle1" class="step-circle active">1</div>
+          <span id="stepLabel1" class="step-label active">Upload & Preview</span>
+        </div>
+        <div id="stepLine1" class="step-line"></div>
+        <div class="flex items-center space-x-2.5">
+          <div id="stepCircle2" class="step-circle">2</div>
+          <span id="stepLabel2" class="step-label">Common Parameters</span>
+        </div>
+        <div id="stepLine2" class="step-line"></div>
+        <div class="flex items-center space-x-2.5">
+          <div id="stepCircle3" class="step-circle">3</div>
+          <span id="stepLabel3" class="step-label">Vendors & Dispatch</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- WINDOW 1 : UPLOAD + PREVIEW -->
+    <div id="win1" class="space-y-6">
+            <div class="glass-card rounded-2xl p-4 flex items-center justify-between gap-4">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-envelope"></i></div>
+          <span class="font-bold text-slate-800 text-sm">Mail Type</span>
+        </div>
+        <select id="svcStep1" onchange="onStep1ServiceChange()" class="w-56 p-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-indigo-700 outline-none">
+          <option value="Biometric">Biometric</option>
+          <option value="Frisking">Frisking</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="glass-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-table-cells"></i></div>
+              <h3 class="font-bold text-slate-800 text-sm">Center List (Vendor Guard OP)</h3>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" id="centerMode_link" onclick="setSrcMode('center','link')" class="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition bg-indigo-600 text-white">Google Sheet Link</button>
+            <button type="button" id="centerMode_file" onclick="setSrcMode('center','file')" class="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition bg-white text-slate-600 border border-slate-200">Upload File</button>
+          </div>
+          <div class="space-y-3">
+            <div id="centerLinkBox" class="space-y-2">
+              <input type="text" id="centerSheetUrl" placeholder="Paste the Vendor Guard OP Google Sheet link" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs outline-none">
+              <p class="text-[11px] text-slate-500">Tab: <b id="centerTabHint"></b> &middot; Fixed headers are picked from Row 2, and Row 1 (date) is kept at the top.</p>
+            </div>
+            <div id="centerFileBox" class="space-y-3 hidden">
+              <div class="dropzone" data-input="centerCsv" data-status="centerStatus">
+                <div class="dz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                <p class="dz-text">Drag & drop your Center List file here, or choose it below</p>
+                <input type="file" id="centerCsv" accept=".csv,.xlsx,.xls" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                <p class="dz-name"></p>
+              </div>
+              <p class="text-[11px] text-slate-500">Headers are detected automatically (usually Row 2). Row 1 (the top row) is also included at the top of every vendor's attachment. A "Vendor Name" column is required.</p>
+            </div>
+            <button onclick="uploadCenterList()" id="centerBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-md btn-animated flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-table-cells"></i> <span id="centerBtnLabel">Fetch & Preview Center List</span>
+            </button>
+          </div>
+          <div id="centerStatus" class="text-[11px] font-semibold text-center text-slate-500"></div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
+            <div class="flex items-center space-x-2.5">
+              <div class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-qrcode"></i></div>
+              <h3 class="font-bold text-slate-800 text-sm">seQRview Data</h3>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" id="seqrMode_link" onclick="setSrcMode('seqr','link')" class="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition bg-indigo-600 text-white">Google Sheet Link</button>
+            <button type="button" id="seqrMode_file" onclick="setSrcMode('seqr','file')" class="flex-1 py-1.5 rounded-lg text-[11px] font-bold transition bg-white text-slate-600 border border-slate-200">Upload File</button>
+          </div>
+          <div class="space-y-3">
+            <div id="seqrLinkBox" class="space-y-2">
+              <input type="text" id="seqrSheetUrl" placeholder="Paste the seQRview data Google Sheet link" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs outline-none">
+              <p class="text-[11px] text-slate-500">Tab: <b id="seqrTabHint"></b> &middot; Vendor matching is case-insensitive (UPPER and lower case both work).</p>
+            </div>
+            <div id="seqrFileBox" class="space-y-3 hidden">
+              <div class="dropzone" data-input="seqrCsv" data-status="seqrStatus">
+                <div class="dz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                <p class="dz-text">Drag & drop your seQRview file here, or choose it below</p>
+                <input type="file" id="seqrCsv" accept=".csv,.xlsx,.xls" class="block w-full text-xs text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                <p class="dz-name"></p>
+              </div>
+              <p class="text-[11px] text-slate-500">Rows are matched to each vendor using the "Vendor Name" column.</p>
+            </div>
+            <button onclick="uploadSeqrData()" id="seqrBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-md btn-animated flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-qrcode"></i> <span id="seqrBtnLabel">Fetch seQRview Data</span>
+            </button>
+          </div>
+          <div id="seqrStatus" class="text-[11px] font-semibold text-center text-slate-500"></div>
+        </div>
+      </div>
+
+      <div id="previewSection" class="glass-card rounded-2xl p-6 space-y-4 hidden animate-fade-in">
+        <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+          <h3 class="font-bold text-slate-800 text-sm flex items-center">
+            <i class="fa-solid fa-eye text-indigo-600 mr-2"></i>Center List Data Preview (<span id="totalRowsCount">0</span> Rows)
+          </h3>
+          <span id="previewBadge" class="text-[11px] bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg font-bold">Headers detected</span>
+        </div>
+        <div class="overflow-x-auto max-h-72 rounded-xl border border-slate-200">
+          <table id="previewTable" class="w-full text-left text-xs text-slate-700">
+            <thead class="bg-slate-100 text-slate-800 uppercase font-bold sticky top-0">
+              <tr id="tableHeaderRow"></tr>
+            </thead>
+            <tbody id="tableBodyRows" class="divide-y divide-slate-200 bg-white"></tbody>
+          </table>
+        </div>
+        <p id="topRowNote" class="text-[11px] text-amber-700 font-semibold hidden"><i class="fa-solid fa-circle-info mr-1"></i>Amber rows = Row 1 of the uploaded file; they go at the very top of every vendor's attachment.</p>
+      </div>
+
+      <div class="flex justify-end">
+        <button onclick="goStep(2)" id="toStep2Btn" disabled class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-3 rounded-xl text-xs transition shadow-lg btn-animated flex items-center space-x-2">
+          <span>Next: Common Parameters</span> <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- WINDOW 2 : COMMON PARAMETERS -->
+    <div id="win2" class="space-y-6 hidden">
+      <div class="flex justify-end">
+        <button type="button" onclick="createNewMail()" class="bg-white/95 hover:bg-white text-indigo-700 font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-md btn-animated flex items-center space-x-2">
+          <i class="fa-solid fa-plus"></i> <span>Create New Mail</span>
+        </button>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 space-y-6 animate-fade-in">
+        <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">2</div>
+            <h3 class="font-bold text-slate-800 text-sm">Common Parameters (Applied to All Vendors)</h3>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Select Zonal Manager (ZM) *</label>
+            <select id="zmSelect" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input font-bold text-indigo-800 outline-none">
+              <option value="">Select ZM</option>
+              <option value="Girish">Girish Chandra Tiwari</option>
+              <option value="Devendra">Devendra Bose</option>
+              <option value="Chetan">Chetan Pandey</option>
+              <option value="Monu">Monu Kumar</option>
+              <option value="Amarjeet">An Amarjeet</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Service Type</label>
+            <select id="serviceSelect" onchange="onServiceChange()" class="hidden">
+              <option value="Biometric">Biometric</option>
+              <option value="Frisking">Frisking</option>
+            </select>
+            <div class="w-full p-3 rounded-xl border border-slate-200 bg-slate-100 text-xs font-semibold text-indigo-700 flex items-center justify-between">
+              <span id="serviceLabel2">Biometric</span>
+              <a href="#" onclick="goStep(1); return false;" class="text-[11px] font-bold text-indigo-600 hover:underline">Please change it to Step 1.</a>
+            </div>
+          </div>
+
+          <div id="fieldModality">
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Modality *</label>
+            <input type="text" id="modalitySelect" oninput="scheduleSubjectUpdate()" placeholder="e.g. Iris & Fingerprint" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input outline-none font-semibold text-indigo-700">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Project Code *</label>
+            <input type="text" id="projectCode" oninput="scheduleSubjectUpdate()" placeholder="e.g. RAILTEL-J&K" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Exam Name *</label>
+            <input type="text" id="examName" oninput="scheduleSubjectUpdate()" placeholder="e.g. JKSSB" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Exam Date *</label>
+            <input type="text" id="examDate" oninput="scheduleSubjectUpdate()" placeholder="e.g. 25th, 30th Oct & 1st Nov'26" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Operator List Date *</label>
+            <input type="text" id="operatorListDate" placeholder="e.g. 2026-10-12" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Final Operator Date *</label>
+            <input type="text" id="finalOperatorDate" placeholder="e.g. 2026-10-14" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">CSR Submit Date *</label>
+            <input type="text" id="csrSubmitDate" placeholder="e.g. 2026-11-01" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input outline-none">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Reporting Time *</label>
+            <input type="text" id="reportingTime" placeholder="e.g. 05:00 AM" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input outline-none">
+          </div>
+        </div>
+
+        <div class="glass-card-dark rounded-xl p-4 space-y-2 text-white">
+          <div class="flex items-center space-x-2 text-indigo-400">
+            <i class="fa-solid fa-code text-xs"></i>
+            <span class="text-xs font-bold uppercase tracking-wider">Dynamic Calculated Subject Line (Live Preview):</span>
+          </div>
+          <p id="subjectPreview" class="text-xs font-mono text-emerald-400 font-semibold leading-relaxed bg-black/40 p-3 rounded-lg border border-white/10">
+            [Subject string will auto compile as you fill the fields...]
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <label class="inline-flex items-center space-x-3 cursor-pointer">
+            <input type="checkbox" id="customBodyCheck" onchange="document.getElementById('customBox').classList.toggle('hidden', !this.checked)" class="w-4 h-4 text-indigo-600 rounded">
+            <span class="text-xs font-bold text-slate-700">Add Urgent / Custom Note (appears in a yellow box right below "Dear Concern,")</span>
+          </label>
+          <div id="customBox" class="hidden animate-fade-in">
+            <textarea id="customNotes" rows="3" placeholder="Enter additional updates or specific instructions here..." class="w-full p-3 rounded-xl border border-amber-300 bg-amber-50 text-xs custom-input outline-none"></textarea>
+          </div>
+        </div>
+        <div id="commonStatus" class="text-xs text-center font-bold min-h-[18px]"></div>
+      </div>
+
+      <div class="flex justify-between">
+        <button onclick="goStep(1)" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-8 py-3 rounded-xl text-xs transition btn-animated flex items-center space-x-2">
+          <i class="fa-solid fa-arrow-left"></i> <span>Back</span>
+        </button>
+        <button onclick="goStep(3)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-8 py-3 rounded-xl text-xs transition shadow-lg btn-animated flex items-center space-x-2">
+          <span>Next: Vendors & Dispatch</span> <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- WINDOW 3 : VENDORS + DISPATCH -->
+    <div id="win3" class="space-y-6 hidden">
+      <div class="flex justify-end">
+        <button type="button" onclick="createNewMail()" class="bg-white/95 hover:bg-white text-indigo-700 font-bold px-5 py-2.5 rounded-xl text-xs transition shadow-md btn-animated flex items-center space-x-2">
+          <i class="fa-solid fa-plus"></i> <span>Create New Mail</span>
+        </button>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 space-y-5 animate-fade-in">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold">3</div>
+            <h3 class="font-bold text-slate-800 text-sm">Vendor Selection & Vendor-wise Details</h3>
+          </div>
+          <span class="text-[11px] bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-lg font-bold"><span id="selectedCount">0</span> of <span id="vendorTotal">0</span> vendors selected</span>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+            <div>
+              <p class="text-xs font-bold text-slate-800"><i class="fa-solid fa-file-import text-indigo-600 mr-1.5"></i>Bulk Vendor Upload (CSV / Excel)</p>
+              <p class="text-[11px] text-slate-500">Columns: Vendor Name, Vendor Email, Shift Amount, Training, Enclosure, Mock, CC.</p>
+            </div>
+            <div class="flex items-center space-x-3 text-[11px] font-bold">
+              <button type="button" onclick="downloadTemplate('xlsx')" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-download mr-1"></i>Template (Excel)</button>
+              <button type="button" onclick="downloadTemplate('csv')" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-download mr-1"></i>Template (CSV)</button>
+            </div>
+          </div>
+          <div class="flex flex-col md:flex-row gap-3">
+            <input type="file" id="vendorMapFile" accept=".csv,.xlsx,.xls" class="block flex-1 text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+            <button type="button" onclick="uploadVendorMapping()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2 rounded-xl text-xs transition shadow-md btn-animated"><i class="fa-solid fa-upload mr-1.5"></i>Apply Vendor File</button>
+          </div>
+          <div id="mappingStatus" class="text-[11px] font-semibold text-slate-500"></div>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+          <p class="text-xs font-bold text-slate-800"><i class="fa-solid fa-wand-magic-sparkles text-indigo-600 mr-1.5"></i>Quick Fill (applies only to selected vendors)</p>
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <input type="text" id="defShift" placeholder="Single / Double (e.g. 400/600)" class="vendor-input">
+            <input type="text" id="defTraining" placeholder="Training Amount" class="vendor-input">
+            <input type="text" id="defEnclosure" placeholder="Enclosure Amount" class="vendor-input">
+            <input type="text" id="defMock" placeholder="Mock (Supervisor)" class="vendor-input">
+            <input type="text" id="defCc" placeholder="CC Email(s)" class="vendor-input">
+          </div>
+          <button type="button" onclick="applyDefaults()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold px-5 py-2 rounded-xl text-xs transition btn-animated"><i class="fa-solid fa-check-double mr-1.5"></i>Apply to Selected Vendors</button>
+        </div>
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <input type="text" id="vendorFilter" oninput="filterVendors()" placeholder="Search vendor..." class="vendor-input md:max-w-xs">
+          <div class="flex items-center space-x-4 text-[11px] font-bold">
+            <button type="button" onclick="selectAllVendors(true)" class="text-indigo-600 hover:text-indigo-800">Select All (visible)</button>
+            <button type="button" onclick="selectAllVendors(false)" class="text-slate-500 hover:text-slate-700">Clear Selection</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto max-h-[28rem] rounded-xl border border-slate-200">
+          <table class="w-full text-left text-xs text-slate-700">
+            <thead class="bg-slate-100 text-slate-800 uppercase font-bold sticky top-0 z-10">
+              <tr>
+                <th class="p-2.5 w-8"><input type="checkbox" id="checkAll" onchange="selectAllVendors(this.checked)"></th>
+                <th class="p-2.5 whitespace-nowrap">Vendor Name</th>
+                <th class="p-2.5 whitespace-nowrap">Centers</th>
+                <th class="p-2.5 whitespace-nowrap">seQRview</th>
+                <th class="p-2.5 whitespace-nowrap">Vendor Email *</th>
+                <th class="p-2.5 whitespace-nowrap">Single / Double *</th>
+                <th class="p-2.5 whitespace-nowrap" id="thTrainEnc">Training *</th>
+                <th class="p-2.5 whitespace-nowrap">Mock *</th>
+                <th class="p-2.5 whitespace-nowrap">CC</th>
+                <th class="p-2.5 whitespace-nowrap">Status</th>
+                <th class="p-2.5 w-8"></th>
+              </tr>
+            </thead>
+            <tbody id="vendorRows" class="divide-y divide-slate-200 bg-white"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-2xl p-6 space-y-5 animate-fade-in">
+        <div class="flex items-center justify-between border-b border-slate-200/80 pb-3">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-7 h-7 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-paper-plane"></i></div>
+            <h3 class="font-bold text-slate-800 text-sm">Dispatch Options & Execution</h3>
+          </div>
+          <span id="dailyInfo" class="text-[11px] text-slate-500 font-semibold"></span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Attachment Format</label>
+            <select id="attachFormat" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input font-medium outline-none">
+              <option value="xlsx">Excel (.xlsx) - single workbook with Center Details & seQRview sheets</option>
+              <option value="csv">CSV (.csv) - separate file for each list</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Delay Between Vendors</label>
+            <select id="delaySelect" class="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-xs custom-input font-medium outline-none">
+              <option value="2000">2 seconds</option>
+              <option value="3000" selected>3 seconds (recommended)</option>
+              <option value="5000">5 seconds</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4">
+          <button onclick="openMailPreview()" type="button" class="w-full md:w-1/3 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 rounded-xl transition shadow-lg text-xs btn-animated flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-eye"></i> <span>Preview Mail Body</span>
+          </button>
+          <button onclick="handleDispatch()" id="dispatchBtn" type="button" class="w-full md:w-2/3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-3.5 rounded-xl transition shadow-xl text-xs btn-animated flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-paper-plane"></i> <span id="dispatchBtnLabel">Dispatch Emails to Selected Vendors</span>
+          </button>
+          <button onclick="stopDispatch()" id="stopBtn" type="button" class="hidden w-full md:w-1/4 bg-rose-600 hover:bg-rose-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg text-xs btn-animated flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-hand"></i> <span>Stop After Current</span>
+          </button>
+        </div>
+
+        <div id="progressWrap" class="hidden space-y-2">
+          <div class="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-emerald-500 transition-all" style="width:0%"></div>
+          </div>
+          <div id="progressText" class="text-[11px] font-semibold text-slate-600 text-center"></div>
+        </div>
+        <div id="dispatchStatus" class="text-xs text-center font-bold min-h-[18px]"></div>
+
+        <div id="reportWrap" class="hidden flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] font-bold">
+          <span class="text-emerald-600">Sent: <span id="sumSent">0</span></span>
+          <span class="text-rose-600">Failed: <span id="sumFailed">0</span></span>
+          <span class="text-amber-600">Skipped: <span id="sumSkipped">0</span></span>
+          <button type="button" onclick="downloadReport()" class="text-indigo-600 hover:text-indigo-800"><i class="fa-solid fa-file-csv mr-1"></i>Download Dispatch Report</button>
+          <span class="text-slate-500">To retry Failed / Skipped vendors, click Dispatch again. Vendors already sent are skipped.</span>
+        </div>
+      </div>
+
+      <div class="flex justify-start">
+        <button onclick="goStep(2)" id="backToStep2Btn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-8 py-3 rounded-xl text-xs transition btn-animated flex items-center space-x-2">
+          <i class="fa-solid fa-arrow-left"></i> <span>Back to Common Parameters</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIL PREVIEW MODAL -->
+  <div id="previewModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-fade-in">
+      <div class="p-4 bg-slate-900 text-white flex justify-between items-center">
+        <h3 class="font-bold text-sm flex items-center">
+          <i class="fa-solid fa-envelope-open-text text-indigo-400 mr-2"></i> Mail Body Live Preview
+          <span id="modalVendor" class="ml-3 text-[11px] font-medium text-slate-300"></span>
+        </h3>
+        <button onclick="closePreviewModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="p-4 bg-slate-100 border-b border-slate-200 text-xs">
+        <p class="font-bold text-slate-800">Subject: <span id="modalSubject" class="font-normal text-indigo-700"></span></p>
+      </div>
+      <div id="modalBody" class="p-6 overflow-y-auto flex-1 text-xs bg-white"></div>
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+        <button onclick="closePreviewModal()" class="px-5 py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition">Close Preview</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- seQRview MISSING POPUP -->
+  <div id="seqrModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-fade-in">
+      <div class="p-4 bg-amber-500 text-white flex items-center space-x-2">
+        <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+        <h3 class="font-extrabold text-sm">seQRview Data Missing</h3>
+      </div>
+      <div class="p-6 space-y-3 text-xs text-slate-700">
+        <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Vendor</p>
+        <p id="seqrModalVendor" class="text-base font-extrabold text-slate-900 break-words"></p>
+        <p id="seqrModalReason" class="text-[11px] text-amber-700 font-semibold"></p>
+        <p class="text-sm font-semibold text-slate-800 pt-2">The seQRview data for this vendor is missing. Do you want to send the mail without seQRview data?</p>
+        <p class="text-[11px] text-slate-500">If you choose YES, the mail will be sent and the log will say "WITHOUT seQRview". If you choose NO, this vendor will be skipped.</p>
+      </div>
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end space-x-3">
+        <button onclick="answerSeqrModal('no')" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition btn-animated">NO - Skip</button>
+        <button onclick="answerSeqrModal('yes')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition btn-animated">YES - Send Mail</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DUPLICATE MAIL POPUP -->
+  <div id="dupModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-[60] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden animate-fade-in">
+      <div class="p-4 bg-rose-600 text-white flex items-center space-x-2">
+        <i class="fa-solid fa-copy text-lg"></i>
+        <h3 class="font-extrabold text-sm">Duplicate Mail Warning</h3>
+      </div>
+      <div class="p-6 space-y-3 text-xs text-slate-700">
+        <p class="text-[11px] text-slate-500 font-semibold uppercase tracking-wider">Vendor</p>
+        <p id="dupModalVendor" class="text-base font-extrabold text-slate-900 break-words"></p>
+        <p id="dupModalInfo" class="text-[11px] text-rose-700 font-semibold"></p>
+        <p class="text-sm font-semibold text-slate-800 pt-2">An identical mail (same vendor, email, project, exam, date, rates, ZM and rows) has already been sent to this vendor. Do you want to send it again?</p>
+        <p class="text-[11px] text-slate-500">If any single detail were different, this warning would not appear.</p>
+      </div>
+      <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end space-x-3">
+        <button onclick="answerDupModal('no')" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition btn-animated">NO - Skip</button>
+        <button onclick="answerDupModal('yes')" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition btn-animated">YES - Send Again</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIRST-TIME APP TOUR MODAL -->
+  <div id="tourModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 text-slate-800 relative">
+      <button onclick="closeTour()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-xs font-semibold flex items-center gap-1">
+        Skip <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div id="tourStep1" class="tour-step">
+        <div class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-file-csv"></i></div>
+        <h3 class="text-base font-bold text-slate-900 mb-1">Step 1: File Uploads</h3>
+        <p class="text-xs text-slate-600 leading-relaxed mb-6">Start by uploading your <b>Center List Excel/CSV</b>. Then upload the <b>seQRview data</b> file to automatically match records for each vendor.</p>
+      </div>
+
+      <div id="tourStep2" class="tour-step hidden">
+        <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-sliders"></i></div>
+        <h3 class="text-base font-bold text-slate-900 mb-1">Step 2: Parameters & Urgent Notes</h3>
+        <p class="text-xs text-slate-600 leading-relaxed mb-6">Select Zonal Manager, Service (Biometric/Frisking), Exam Dates, and Timings. You can also add an <b>Urgent Note</b> which will highlight in yellow right below <i>"Dear Concern,"</i> inside the mail.</p>
+      </div>
+
+      <div id="tourStep3" class="tour-step hidden">
+        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mb-4"><i class="fa-solid fa-paper-plane"></i></div>
+        <h3 class="text-base font-bold text-slate-900 mb-1">Step 3: Rates & Dispatch</h3>
+        <p class="text-xs text-slate-600 leading-relaxed mb-6">Review vendor rates, use Quick Fill or Mapping upload if needed, preview the mail format, and dispatch official emails with attachments.</p>
+      </div>
+
+      <div class="flex items-center justify-between border-t border-slate-100 pt-4 mt-2">
+        <div class="flex space-x-1.5" id="tourDots">
+          <span class="w-2.5 h-2.5 rounded-full bg-indigo-600" id="dot1"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-slate-200" id="dot2"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-slate-200" id="dot3"></span>
+        </div>
+        <button id="tourNextBtn" onclick="nextTourStep()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg transition">
+          Next <i class="fa-solid fa-arrow-right ml-1"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
